@@ -1,0 +1,57 @@
+version: '3.8'
+services:
+  app:
+    build:
+      args:
+        user: nhatnguyen
+        uid: 1000
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www/html/
+    volumes:
+      - ./:/var/www/html/
+    networks:
+      - photos
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    ports:
+      - 8005:80
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d/
+    networks:
+      - photos
+  db:
+    image: mysql/mysql-server:5.7
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tmdt
+      MYSQL_ROOT_PASSWORD: mysql12345
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_USER: nhatnguyen
+      MYSQL_PASSWORD: mysql12345
+    ports:
+      - "9906:3306"
+    volumes:
+      - ./database/tmdt.sql:/docker-entrypoint-initdb.d/dump.sql
+    networks:
+      - photos
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: nhatnguyen
+      PMA_PASSWORD: mysql12345
+    ports:
+      - "8080:80"
+    networks:
+      - photos
+
+# Docker Networks
+networks:
+  photos:
+    driver: bridge
